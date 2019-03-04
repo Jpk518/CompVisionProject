@@ -1,26 +1,29 @@
 %function train_support_vector_machine()
-%% Prepare dataset
+clear; close; clc;
+%% Retrieve dataset
+% Contains 17760 images classified as car(1) or not car(0). 
+% Each sample has 1764 features. Features(17760,1764), labels(17760,1)
+fprintf('Starting')
 
-% Contains 150 images classified as a certain class. Each sample has 4 features
-load fisheriris.mat     
+[features, labels] = extract_dataset_feature_vectors();
 
-% Turns string classifications to numbers
-species_num = grp2idx(species);
+clearvars -except features labels
+[num_rows, num cols] = size(features);
 
+fprintf('got here')
+%% Divide test set in to training and validation 80/20 (X=features, y=labels)
+% We will turn 80 of our data set to training data and 20% to validation data.
+% X_train = features(1:floor(0.8*num_rows), :);
+% y_train = labels(1:1:floor(0.8*num_rows), :);
 
-% Binary Classification Problem
-X = randn(100,10);  % Add useless features to dataset 
-X(:,[1,3,5,7]) = meas(1:100,:);
-y = species_num(1:100);
+% X_test = features(floor(0.8*num_rows)+1:end, :);
+% y_test = labels(floor(0.8*num_rows)+1:end, :);
 
-%% Divide test set in to training and validation 80/20
-rand_num = randperm(100);
+X_train = features(1:800, :);
+y_train = labels(1:800, :);
+X_test = features(801:1000, :);
+y_test = labels(801:1000, :);
 
-X_train = X(rand_num(1:80),:);
-y_train = y(rand_num(1:80),:);
-
-X_test = X(rand_num(81:end),:);
-y_test = y(rand_num(81:end),:);
 
 %% Preparing validation set out of training set (K-fold cross validation)
 % Constructs an object c out of a random nonstratified partition for k-fold cross-validation on n observations.
@@ -29,8 +32,10 @@ c = cvpartition(y_train,'k',5);
 %% Feature Selection
 % Extracts 2 random features to
 opts = statset('disp','iter');
+
 fun = @(train_data, train_labels, test_data, test_labels)...
     sum(predict(fitcsvm(train_data, train_labels, 'KernelFunction', 'rbf'), test_data) ~= test_labels);
+
 [fs, history] = sequentialfs(fun, X_train, y_train, 'cv', c, 'options', opts, 'nfeatures', 2);
 
 %% Best hyperparameters
@@ -40,7 +45,7 @@ X_train_with_best_features = X_train(:,fs);
 % Train binary support vector machine classifier
 Md1 = fitcsvm(X_train_with_best_features, y_train, 'KernelFunction', 'rbf', 'OptimizeHyperparameters', 'auto',...
     'HyperparameterOptimizationOptions', struct('AcquisitionFunctionName','expected-improvement-plus','ShowPlots', true));
-
+fprintf('got here 5')
 
 %% Test model with test set
 
@@ -69,4 +74,4 @@ pos = find(pred_mesh == 2);
 h2 = plot(dd(pos,1), dd(pos,2),'s','color',bluecolor,'Markersize',5,'MarkerEdgeColor',bluecolor,'MarkerFaceColor',bluecolor);
 uistack(h1,'bottom');
 uistack(h2,'bottom');
-legend([hgscatter;h_sv],{'setosa','versicolor','support vectors'})
+legend([hgscatter;h_sv],{'car','not car','support vectors'})

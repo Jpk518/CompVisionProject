@@ -8,19 +8,20 @@ video_player = vision.DeployableVideoPlayer();
 frame_num = 0
 while hasFrame(video_reader)
 %     fprintf('Frame Number: %f .', frame_num);
-    frame = readFrame(video_reader
+    frame = readFrame(video_reader);
     
     [height, width] = size(frame);
 
-    [featureVector, hogVisualization] = extractHOGFeatures(frame);
+    [featureVector, hogVisualization] = extractHOGFeatures(frame(height/4:height/2),:);
     
     
   
     
     
-%     figure(1); imshow(frame); hold on;
+    figure(1); 
+    imshow(frame); hold on;
 %     video_player(frame)
-    figure(1); plot(hogVisualization);
+    plot(hogVisualization(:,:));
     frame_num = frame_num + 1;    % Iterate to next frame
 end
    
