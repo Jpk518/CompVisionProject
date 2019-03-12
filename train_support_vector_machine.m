@@ -2,20 +2,29 @@
 clear; close; clc;
 %% Retrieve dataset
 % Contains 17760 images classified as car(1) or not car(0). 
-% Each sample has 1764 features. Features(17760,1764), labels(17760,1)
-fprintf('Starting')
+% Each sample has 5292 features. Features(17760,1764), labels(17760,1)
+fprintf('Starting\n')
 
-[features, labels] = extract_dataset_feature_vectors();
+if exist('feature_vectors.mat', 'file') == 2
+    fprintf('Loading feature vectors\n')
+    load('feature_vectors.mat')
+else
+    fprintf('Creating feature vectors\n')
+    [features, labels] = extract_dataset_feature_vectors();
+end
+
+features = zscore(features);
+
 
 clearvars -except features labels
 [num_rows, num cols] = size(features);
 
-fprintf('got here')
+fprintf('got here\n')
 %% Divide test set in to training and validation 80/20 (X=features, y=labels)
 % We will turn 80 of our data set to training data and 20% to validation data.
 % X_train = features(1:floor(0.8*num_rows), :);
 % y_train = labels(1:1:floor(0.8*num_rows), :);
-
+% 
 % X_test = features(floor(0.8*num_rows)+1:end, :);
 % y_test = labels(floor(0.8*num_rows)+1:end, :);
 
