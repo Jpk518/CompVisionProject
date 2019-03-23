@@ -1,18 +1,30 @@
-% function hog = get_hog_features(im)
+% function hog_bin = get_hog_features(im)
 %% HOG algorithm Preprocessing and parameters 
-pixels_per_cell = [8,8];
-cells_per_block = [2,2];
-num_bins = 9;
-
 im = imread('test_image.png');
-hsv = rgb2hsv(im);
+hsv = double(im);
 [y,x,m] = size(hsv);
 
-num_cells_x = x / pixels_per_cell(1);
-num_cells_y = y / pixels_per_cell(2);
+pixels_per_cell = [8,8];
+cells_per_block = [2,2];
 
-step_x = pixels_per_cell(1);
-step_y = pixels_per_cell(2);
+% Calculate number of cells
+num_cells_x = x / pixels_per_cell(2);
+num_cells_y = y / pixels_per_cell(1);
+
+% ppc = pixels per cell
+ppc_x = pixels_per_cell(2);
+ppc_y = pixels_per_cell(1);
+
+% cpb = cells per block
+cpb_x = cells_per_block(2);
+cpb_y = cells_per_block(1);
+
+% ppb = pixels per block
+ppb_x = pixels_per_cell(2)*cells_per_block(2);
+pp_y = pixels_per_cell(1)*cells_per_block(1);
+num_blocks_x = (x - ppb_x) / (ppb_x/2);
+num_blocks_y = (y - pp_y) / (pp_y/2);
+num_bins = 9;
 
 %% Image Gradiants
 % Sobel operator derivative masks
@@ -23,58 +35,55 @@ dy =  dx';
 Ix= imfilter(hsv, dx); 
 Iy= imfilter(hsv, dy);
 
-% Gradiant Magnitude and direction
-grad_mag = sqrt(Ix.^2 + Iy.^2);
-grad_dir = rad2deg(atan2(Iy,Ix));
-grad_dir = grad_dir - 0.001;
-grad_dir(isnan(grad_dir)) = 0;    % Convert nan values from division by 0 to 0
-grad_dir = abs(grad_dir);
+% Gradiant Magnitude and unsigned direction computation
+g_mag = sqrt(Ix.^2 + Iy.^2);
+g_dir = rad2deg(atan2(Iy,Ix));
+g_dir(g_dir == 180) = g_dir(g_dir == 180) - 0.001;
+g_dir(g_dir < 0) = 180 + g_dir(g_dir < 0);  % Convert to unsigned
 
 %% Histogram of gradients in each cell
 % Assign Bucket Values
-left_bin = floor(abs(grad_dir / 20));
-right_bin = mod(abs(floor(grad_dir / 20) + 1), num_bins);
+l_bin = floor(g_dir / 20);
+r_bin = mod(round(g_dir / 20) + 1, num_bins);
 
-left_val = grad_mag .* (right_bin .* 20 - grad_dir) ./ 20;
-right_val = grad_mag .* (grad_dir - left_bin .* 20) ./ 20;
+% Bilinear Interpolation
+l_val = g_mag .* ((l_bin+1).*20 - g_dir) ./20;
+r_val = g_mag .* (g_dir - l_bin .* 20) ./ 20;
 
-orient_bins = zeros(x*y, num_bins + 1);
-cur_cell_num = 0;
+% Create empty HOG Histogram
+hog_bin = zeros(num_cells_x*num_cells_y*num_bins + 1,1);
 
-% Divide image into cells
-for i = 0:num_cells_y-1
-    for j = 0:num_cells_x-1
-        cur_cell_num = cur_cell_num + 1;
-        cell_left_bin = left_bin(i*step_y+1:(i+1)*step_y, j*step_x+1:(j+1)*step_x);
-        cell_right_bin = left_bin(i*step_y+1:(i+1)*step_y, j*step_x+1:(j+1)*step_x);
-        cell_left_vals = left_val(i*step_y+1:(i+1)*step_y, j*step_x+1:(j+1)*step_x);
-        cell_right_vals = right_val(i*step_y+1:(i+1)*step_y, j*step_x+1:(j+1)*step_x);
-
-        cell_bin = zeros(num_bins, 1);
-
-        for i1 = 1:pixels_per_cell(2)
-            for j1 = 1:pixels_per_cell(1)
-                cell_bin(cell_left_bin(i1,j1)+1) = cell_bin(cell_left_bin(i1,j1)+1) + cell_left_vals(i1,j1);
-                cell_bin(cell_right_bin(i1,j1)+1) = cell_bin(cell_right_bin(i1,j1)+1) + cell_right_vals(i1,j1);
-            end
-        end
+%Block loop
+b_count = 0;
+for i = 0:num_blocks_y-1
+    for j = 0:num_blocks_x-1
+        b_bin = zeros(cpb_x*cpb_y*num_bins,1);
+        %Cell loop
+        c_count = 0;
+        for i1 = 1:cpb_y
+            for j1 = 1:cpb_x
+                c_bin = zeros(num_bins,1);
+                c_start_x = (j/2)*ppb_x+j1*ppc_x+1;
+                c_start_y = (i/2)*pp_y+i1*ppc_y+1;
+                c_end_x = (j/2)*ppb_x+(j1+1)*ppc_x;
+                c_end_y = (i/2)*pp_y+(i1+1)*ppc_y;
+                cell_l_bin = reshape(l_bin(c_start_y:c_end_y, c_start_x:c_end_x),[],1);
+                cell_r_bin = reshape(r_bin(c_start_y:c_end_y, c_start_x:c_end_x),[],1);
+                cell_l_val = reshape(l_val(c_start_y:c_end_y, c_start_x:c_end_x),[],1);
+                cell_r_val = reshape(r_val(c_start_y:c_end_y, c_start_x:c_end_x),[],1);
+                K = max(size(cell_l_bin));
+                
+                bin = 0;
+                for k = 1:K
+                    c_bin(cell_l_bin(k)+1) = c_bin(cell_l_bin(k)+1) + cell_l_val(k);
+                    c_bin(cell_r_bin(k)+1) = c_bin(cell_r_bin(k)+1) + cell_l_val(k);
+                end  % End of bin angle loop
+                c_count = c_count + 1;
+                b_bin((c_count-1)*num_bins+1:c_count*num_bins) = c_bin; 
+            end 
+        end % End of cell loop
+        b_bin = b_bin/(norm(b_bin)+0.01); 
+        b_count = b_count + 1;
+        hog_bin((b_count-1)*num_bins*4+1:b_count*num_bins*4,1) = b_bin;
     end
-end
-
-
-
-
-
-% for i = 0:num_cells_y-1
-%     for j = 0:num_cells_x-1
-%         cur_cell_num = cur_cell_num +1;
-%         
-%         for i1 = 1:height
-%             for j1 = 1:width
-%                 orient_bins(cur_cell_num, left_bin(i1,j1)+1) = orient_bins(cur_cell_num, left_bin(i1,j1)+1) + left_val(i1,j1);
-%                 orient_bins(cur_cell_num, right_bin(i1,j1)+1) = orient_bins(cur_cell_num, right_bin(i1,j1)+1) + right_val(i1,j1);
-%             end
-%         end      
-%     end
-% end
-% 
+end % End of block loop
