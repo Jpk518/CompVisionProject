@@ -1,8 +1,6 @@
-% function hog_bin = get_hog_features(im)
+function hog_bin = get_hog_features(im)
 %% HOG algorithm Preprocessing and parameters 
-im = imread('test_image.png');
-hsv = double(im);
-[y,x,m] = size(hsv);
+[y,x] = size(im);
 
 pixels_per_cell = [8,8];
 cells_per_block = [2,2];
@@ -32,8 +30,8 @@ dx =  [-1 -2 -1; 0 0 0; 1 2 1];
 dy =  dx';
 
 % Calculate the horizontal and vertical gradients using correlation with dx and dy
-Ix= imfilter(hsv, dx); 
-Iy= imfilter(hsv, dy);
+Ix= imfilter(im, dx); 
+Iy= imfilter(im, dy);
 
 % Gradiant Magnitude and unsigned direction computation
 g_mag = sqrt(Ix.^2 + Iy.^2);
