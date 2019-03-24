@@ -1,10 +1,10 @@
-function feature_vector_total = hog_rgb(im)
+function feature_vector_total = hog_hsv(im)
 %%
 % im = imread('test_image.png');
 hsv = rgb2hsv(im);
 hsv = round(hsv*256);
 % hsv = double(im);
-[y, x, m] = size(hsv);
+[~, ~, m] = size(hsv);
 
 feature_vector_total = [];
 for c=1:m

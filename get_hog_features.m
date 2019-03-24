@@ -61,14 +61,14 @@ for i = 0:num_blocks_y-1
         for i1 = 1:cpb_y
             for j1 = 1:cpb_x
                 c_bin = zeros(num_bins,1);
-                c_start_x = (j/2)*ppb_x+j1*ppc_x+1;
-                c_start_y = (i/2)*pp_y+i1*ppc_y+1;
-                c_end_x = (j/2)*ppb_x+(j1+1)*ppc_x;
-                c_end_y = (i/2)*pp_y+(i1+1)*ppc_y;
-                cell_l_bin = reshape(l_bin(c_start_y:c_end_y, c_start_x:c_end_x),[],1);
-                cell_r_bin = reshape(r_bin(c_start_y:c_end_y, c_start_x:c_end_x),[],1);
-                cell_l_val = reshape(l_val(c_start_y:c_end_y, c_start_x:c_end_x),[],1);
-                cell_r_val = reshape(r_val(c_start_y:c_end_y, c_start_x:c_end_x),[],1);
+                cx_start = (j/2)*ppb_x+j1*ppc_x+1;
+                cy_start = (i/2)*pp_y+i1*ppc_y+1;
+                cx_end = (j/2)*ppb_x+(j1+1)*ppc_x;
+                cy_end = (i/2)*pp_y+(i1+1)*ppc_y;
+                cell_l_bin = reshape(l_bin(cy_start:cy_end, cx_start:cx_end), [], 1);
+                cell_r_bin = reshape(r_bin(cy_start:cy_end, cx_start:cx_end), [], 1);
+                cell_l_val = reshape(l_val(cy_start:cy_end, cx_start:cx_end), [], 1);
+                cell_r_val = reshape(r_val(cy_start:cy_end, cx_start:cx_end), [], 1);
                 K = max(size(cell_l_bin));
                 
                 bin = 0;
@@ -80,7 +80,7 @@ for i = 0:num_blocks_y-1
                 b_bin((c_count-1)*num_bins+1:c_count*num_bins) = c_bin; 
             end 
         end % End of cell loop
-        b_bin = b_bin/(norm(b_bin)+0.01); 
+        b_bin = b_bin/(norm(b_bin) + 0.01); 
         b_count = b_count + 1;
         hog_bin((b_count-1)*num_bins*4+1:b_count*num_bins*4,1) = b_bin;
     end

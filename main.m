@@ -1,7 +1,7 @@
 clear; close all; clc;      % Clear previous state
 
 %%
-input_file = 'test_video.mp4';    % Input Video
+input_file = 'project_video.mp4';    % Input Video
 
 % Create System objects for reading and displaying video and for drawing a bounding box of the object.
 videoFileReader = vision.VideoFileReader(input_file);   % object to read video frames, images, and audio samples from a video file
@@ -32,10 +32,15 @@ initializeObject(tracker, objectHSV(:,:,1) , objectRegion);
 while ~isDone(videoFileReader)
   frame = step(videoFileReader);   % Grab current frame
   hsv = rgb2hsv(frame);            % Convert frame to hsv                   
-  bbox = step(tracker, hsv(:,:,1));     %     
-                                        
+  bbox = step(tracker, hsv(:,:,1));     %  
+  
+ 
+  
+  
   out = step(shapeInserter, frame, bbox); 
-  step(videoPlayer, out);                 
+  step(videoPlayer, out);   
+  pos = [1 400 1279 310]
+  rectangle('Position', pos, 'EdgeColor', 'r')
 end
  
 % Release video and reader and player
