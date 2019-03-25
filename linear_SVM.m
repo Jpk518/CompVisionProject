@@ -12,49 +12,23 @@ else
     [features, labels] = extract_dataset_feature_vectors();
 end
 
-features = zscore(features);  % Normalize features
+% features = zscore(features);  % Normalize features
 
-clearvars -except features labels  % Clean up workspace
 [num_rows, num_cols] = size(features);
-
 X_train = features(1:floor(0.8*num_rows), :);
 y_train = labels(1:1:floor(0.8*num_rows), :);
-
 X_test = features(floor(0.8*num_rows)+1:end, :);
 y_test = labels(floor(0.8*num_rows)+1:end, :);
+y_train(y_train == 0) = y_train(y_train == 0) - 1;
+fprintf('Creating Initial Model\n');
 
-fprintf('Creating Initial Model\n')
+Mdl = fitclinear(X_train', y_train','ObservationsIn','columns','Solver','sparsa',...
+    'OptimizeHyperparameters','auto','HyperparameterOptimizationOptions',...
+    struct('AcquisitionFunctionName','expected-improvement-plus'));
 
-Lambda = logspace(-6,-0.5,11);
-CVMdl = fitclinear(X_train', y_train','ObservationsIn','columns','KFold',5,...
-                    'Learner','logistic','Solver','sparsa','Regularization','lasso',...
-                    'Lambda', Lambda,'GradientTolerance',1e-8);
+fprintf(' Finished creating initial model\n');
                 
-fprintf(' Finished creating initial model\n')
-                
-numCLModels = numel(CVMdl.Trained);
-
-Mdl1 = CVMdl.Trained{1};
-
-ce = kfoldLoss(CVMdl);
-
 fprintf('Creating cross validation model \n')
 
-Mdl = fitclinear(X_train',y_train','ObservationsIn','columns','Solver','sparsa',...
-    'OptimizeHyperparameters','auto','HyperparameterOptimizationOptions',...
-    struct('AcquisitionFunctionName','expected-improvement-plus'))
-numNZCoeff = sum(Mdl.Beta~=0);
 
-figure;
-[h,hL1,hL2] = plotyy(log10(Lambda),log10(ce),...
-    log10(Lambda),log10(numNZCoeff)); 
-hL1.Marker = 'o';
-hL2.Marker = 'o';
-ylabel(h(1),'log_{10} classification error')
-ylabel(h(2),'log_{10} nonzero-coefficient frequency')
-xlabel('log_{10} Lambda')
-title('Test-Sample Statistics')
-hold off
-
-
-% save('SVM','MdlFinal')
+save('SVM','Mdl')

@@ -13,10 +13,8 @@ else
     save('feature_vectors','features', 'labels');
 end
 
-% features = zscore(features);  % Normalize features
-
 clearvars -except features labels  % Clean up workspace
-% [num_rows, num_cols] = size(features);
+[num_rows, num_cols] = size(features);
 
 %% Divide test set in to training and validation 80/20 (X=features, y=labels)
 % We will turn 80 of our data set to training data and 20% to validation data.
@@ -26,15 +24,15 @@ clearvars -except features labels  % Clean up workspace
 % X_test = features(floor(0.8*num_rows)+1:end, :);
 % y_test = labels(floor(0.8*num_rows)+1:end, :);
 
-X_train = features(1:800, :);
-y_train = labels(1:800, :);
-X_test = features(801:1000, :);
-y_test = labels(801:1000, :);
+X_train = features(1:20, :);
+y_train = labels(1:20, :);
+X_test = features(21:30, :);
+y_test = labels(21:30, :);
 
 %% Feature Selection
 % Preparing validation set out of training set (K-fold cross validation)
 % Constructs an object c from cvpartition class out of a random nonstratified partition for k-fold cross-validation on n observations.
-c = cvpartition(y_train, 'k', 10);   
+c = cvpartition(y_train, 'k', 5);   
 
 opts = statset('disp','iter');
 
@@ -58,7 +56,7 @@ X_train_w_best_features = X_train(:, fs);
    
 % Train binary support vector machine classifier returning classification discrimination object Md1
 model = fitcsvm(X_train_w_best_features, y_train, ...
-             'KernelFunction', 'rbf', 'OptimizeHyperparameters', 'auto',...
+             'KernelFunction', 'polynomial', 'OptimizeHyperparameters', 'auto',...
              'HyperparameterOptimizationOptions', struct('AcquisitionFunctionName','expected-improvement-plus','ShowPlots', true));
          
 %% Cross Validation - Testing Model with Test Set
