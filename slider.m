@@ -65,7 +65,7 @@ end
 figure;
 imshow(frame);
 
-boxes = boxes'
+boxes = boxes';
 for iter = 1:length(boxes)
     x = boxes(1, iter);
     y = boxes(2, iter);

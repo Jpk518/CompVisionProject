@@ -1,8 +1,8 @@
-function is_car = classifier(features)
+% function is_car = classifier(features)
 % Load svm model for classification
 load('SVM.mat')
-% im = imread('test_image2.png');
-% features = hog_hsv(im);
+im = imread('image0024.png');
+features = hog_hsv(im);
 
 features = reshape(features, 1, []);
 best_features = features(:, fs);
