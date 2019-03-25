@@ -12,7 +12,7 @@ else
     [features, labels] = extract_dataset_feature_vectors();
 end
 
-% features = zscore(features);  % Normalize features
+features = zscore(features);  % Normalize features
 
 clearvars -except features labels  % Clean up workspace
 % [num_rows, num_cols] = size(features);
@@ -25,35 +25,35 @@ clearvars -except features labels  % Clean up workspace
 % X_test = features(floor(0.8*num_rows)+1:end, :);
 % y_test = labels(floor(0.8*num_rows)+1:end, :);
 
-X_train = features(1:20, :);
-y_train = labels(1:20, :);
-X_test = features(21:30, :);
-y_test = labels(21:30, :);
+X_train = features(1:800, :);
+y_train = labels(1:800, :);
+X_test = features(801:1000, :);
+y_test = labels(801:1000, :);
 
 %% Feature Selection
 % Preparing validation set out of training set (K-fold cross validation)
 % Constructs an object c from cvpartition class out of a random nonstratified partition for k-fold cross-validation on n observations.
-c = cvpartition(y_train, 'k', 5);   
+c = cvpartition(y_train, 'k', 10);   
 
 opts = statset('disp','iter');
 
-% Create a function handle fun that allows to access 
+% Create a function handle fun to a function that defines criterion used to select features and to determine when to stop
 fun = @(train_data, train_labels, test_data, test_labels)...
-    sum(predict(fitcsvm(train_data, train_labels, 'KernelFunction', 'rbf'), test_data) ...
-    ~= test_labels);
+    sum( ...
+         predict(fitcsvm(train_data, train_labels, 'KernelFunction', 'rbf'), test_data) ~= test_labels);
 
-% Sequential feature selection: Selects subset from X and best predicts y
+% Sequential feature selection: Selects subset from X and best predicts y. In laymens terms, determine what variables to include
 % by sequentialy selecting features until there is no improvement in prediction
 % params:
-%   fun: function handle to function that that defines criterion used to select features and determine when to stop
+%   fun: function handle
 %   cv: validation method used to compute the criterion for each candidate feauture subset
-%   options: options structure for itterative sequential search algorithm created by statset
+%   options: options structure for iterative sequential search algorithm created by statset
 %   nfeatures: number of features at which sequentialfs should stop
 [fs, history] = sequentialfs(fun, X_train, y_train, ...
-                             'cv', c, 'options', opts, 'nfeatures', 2);
+                             'cv', c, 'options', opts, 'nfeatures', 4);
 
 %% Train Classifier With Best hyperparameters
-X_train_w_best_features = X_train(:,fs);
+X_train_w_best_features = X_train(:, fs);
    
 % Train binary support vector machine classifier returning classification discrimination object Md1
 model = fitcsvm(X_train_w_best_features, y_train, ...
@@ -68,7 +68,7 @@ accuracy = sum(predict(model, X_test_with_best_feature) == y_test) / ...
 %% Plot Hyperplane and other pertinent data
 figure;
 
-% Scatter plot by group
+% Plot a scatter diagram of data and circle support vectors
 hgscatter = gscatter(X_train_w_best_features(:,1), X_train_w_best_features(:,2), y_train);
 hold on;
 h_sv = plot(model.SupportVectors(:,1), model.SupportVectors(:,2), ...
