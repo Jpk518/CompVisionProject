@@ -36,9 +36,9 @@ Iy= imfilter(im, dy);
 % Gradiant Magnitude and unsigned direction computation
 g_mag = sqrt(Ix.^2 + Iy.^2);
 g_dir = rad2deg(atan2(Iy,Ix));
-g_dir(g_dir == 180) = g_dir(g_dir == 180) - 0.001;
+% g_dir(g_dir == 180) = g_dir(g_dir == 180) - 0.001;
 g_dir(g_dir < 0) = 180 + g_dir(g_dir < 0);  % Convert to unsigned
-
+g_dir(g_dir == 180) = g_dir(g_dir == 180) - 0.001;
 %% Histogram of gradients in each cell
 % Assign Bucket Values
 l_bin = floor(g_dir / 20);

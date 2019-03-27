@@ -1,4 +1,5 @@
 function feature_vector_total = hog_hsv(im)
+
 %%
 % im = imread('test_image.png');
 hsv = rgb2hsv(im);
@@ -17,5 +18,4 @@ for c=1:m
 end
 
 feature_vector_total = reshape(feature_vector_total, [], 1);
-
 
